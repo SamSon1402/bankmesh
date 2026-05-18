@@ -193,7 +193,7 @@ curl -X POST http://localhost:3000/api/webhooks/plaid \
 
 ---
 
-## What's not in this demo
+## What's not in this Project
 
 - **Auth + multi-tenancy.** Routes take `userId` from the body; production wraps with `withAuth(orgId)` and rows get an `organizationId` column.
 - **Real Plaid calls.** `accountsBalanceGet`, `transferCreate`, etc. are stubbed; shapes match the SDK. Drop in real credentials and remove the stubs.
