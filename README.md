@@ -199,10 +199,9 @@ curl -X POST http://localhost:3000/api/webhooks/plaid \
 - **Real Plaid calls.** `accountsBalanceGet`, `transferCreate`, etc. are stubbed; shapes match the SDK. Drop in real credentials and remove the stubs.
 - **KMS-managed encryption keys.** Env-based `ACCESS_TOKEN_AES_KEY` for dev; production reads from AWS KMS / Vault via the `keyId` indirection already in the schema.
 - **Yield accrual job.** Schema has `YieldAccrual` table; the daily activity that fills it isn't implemented.
-- **Frontend.** Interactive demo at [samson1402.github.io](https://samson1402.github.io).
 - **Tests.** Pure `evaluatePolicy` is the highest-leverage test target; Temporal `TestWorkflowEnvironment` for the sweep state machine; webhook signature verification.
 - **Observability.** OpenTelemetry across Inngest → Temporal → activity; Datadog metrics on sweep-state-duration percentiles.
 
 ---
 
-Built by Sameer M · 2026 · [samson1402.github.io](https://samson1402.github.io)
+Built by Sameer M · 2026 · 
