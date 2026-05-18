@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankMesh - Multi-Bank Cash Orchestration | Round Treasury</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.4);
+            --gold: #eab308;
+            --amber: #f59e0b;
+            --ivory: #fef9c3;
+            --cyan: #06b6d4;
+            --rose: #f43f5e;
+            --violet: #8b5cf6;
+            --bg-dark: #04140d;
+            --bg-card: #0a1f17;
+            --bg-elevated: #13302a;
+            --bg-deeper: #020a08;
+            --text-primary: #f0fdf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1c3d34;
+            --border-bright: #2c5749;
+            --mesh-gradient: linear-gradient(135deg, #10b981 0%, #eab308 50%, #f59e0b 100%);
+            --gold-gradient: linear-gradient(135deg, #eab308 0%, #fef9c3 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 0% 100%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 100% 0%, rgba(234, 179, 8, 0.10) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(245, 158, 11, 0.04) 0%, transparent 70%);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(24px);
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--mesh-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            position: relative;
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            background: var(--mesh-gradient);
+            border-radius: 15px;
+            z-index: -1;
+            opacity: 0.5;
+            filter: blur(10px);
+        }
+
+        .logo-text {
+            font-size: 1.55rem;
+            font-weight: 800;
+            background: var(--mesh-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 500;
+        }
+
+        .header-badges {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+        }
+
+        .badge.live {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--emerald);
+            color: var(--emerald);
+        }
+
+        .badge.live::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--emerald);
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: livePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--emerald-glow); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 8px transparent; }
+        }
+
+        .main {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 3rem;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 1.8rem;
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--mesh-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .hero-meta {
+            display: inline-flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .hero-meta span strong { color: var(--emerald); }
+
+        /* Top stat strip */
+        .stat-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-tile {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--emerald);
+        }
+
+        .stat-tile.gold::before { background: var(--gold); }
+        .stat-tile.amber::before { background: var(--amber); }
+        .stat-tile.violet::before { background: var(--violet); }
+
+        .stat-tile .label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-tile .value {
+            font-size: 1.7rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--emerald);
+            line-height: 1.1;
+        }
+
+        .stat-tile.gold .value { color: var(--gold); }
+        .stat-tile.amber .value { color: var(--amber); }
+        .stat-tile.violet .value { color: var(--violet); }
+
+        .stat-tile .delta {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-tile .delta.up { color: var(--emerald); }
+
+        /* Main workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 1300px) {
+            .workspace { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(180deg, rgba(19, 48, 42, 0.5) 0%, transparent 100%);
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body { padding: 1.25rem; }
+
+        /* Mesh canvas — bank cards in a constellation */
+        .mesh-canvas {
+            position: relative;
+            background: var(--bg-deeper);
+            border-radius: 14px;
+            padding: 1.5rem;
+            min-height: 460px;
+            overflow: hidden;
+            margin-bottom: 1.2rem;
+        }
+
+        .mesh-canvas::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(16, 185, 129, 0.12) 1px, transparent 0);
+            background-size: 22px 22px;
+            pointer-events: none;
+        }
+
+        #flowSvg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .bank-grid {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 1.5rem;
+            min-height: 410px;
+        }
+
+        .bank-card {
+            background: linear-gradient(180deg, rgba(19, 48, 42, 0.95) 0%, rgba(10, 31, 23, 0.95) 100%);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem 1.1rem;
+            position: relative;
+            transition: all 0.3s;
+            backdrop-filter: blur(4px);
+        }
+
+        .bank-card.active {
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15), 0 8px 30px rgba(16, 185, 129, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .bank-card.sweeping {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.15);
+            animation: sweepPulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes sweepPulse {
+            0%, 100% { box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.15), 0 0 20px rgba(234, 179, 8, 0.3); }
+            50% { box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.2), 0 0 30px rgba(234, 179, 8, 0.4); }
+        }
+
+        .bank-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .bank-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .bank-logo.hsbc { background: linear-gradient(135deg, #db0011, #890000); }
+        .bank-logo.wise { background: linear-gradient(135deg, #9fe870, #163300); color: #163300; }
+        .bank-logo.revolut { background: linear-gradient(135deg, #191c1f, #000); }
+        .bank-logo.mercury { background: linear-gradient(135deg, #f6f5ec, #d9d7c5); color: #1a1a1a; }
+        .bank-logo.mmf { background: var(--gold-gradient); color: #4a3500; }
+
+        .bank-name-block { flex: 1; min-width: 0; }
+
+        .bank-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .bank-meta {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .bank-balance {
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--emerald);
+            line-height: 1.1;
+            margin-bottom: 0.3rem;
+            transition: color 0.4s;
+        }
+
+        .bank-card.mmf .bank-balance { color: var(--gold); }
+
+        .bank-balance.changing {
+            color: var(--amber);
+        }
+
+        .bank-meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 0.55rem;
+        }
+
+        .bank-meta-row .pos { color: var(--emerald); }
+        .bank-meta-row .threshold { color: var(--text-secondary); }
+
+        .bank-progress {
+            height: 4px;
+            background: var(--bg-deeper);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .bank-progress-bar {
+            height: 100%;
+            background: var(--emerald);
+            border-radius: 2px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bank-card.below-min .bank-progress-bar { background: var(--rose); }
+        .bank-card.surplus .bank-progress-bar { background: var(--gold); }
+
+        .surplus-flag {
+            position: absolute;
+            top: 0.7rem;
+            right: 0.8rem;
+            background: rgba(234, 179, 8, 0.2);
+            color: var(--gold);
+            font-size: 0.6rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .bank-card.surplus .surplus-flag { opacity: 1; }
+
+        /* Policy panel */
+        .policy-panel {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .policy-row {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+
+        .policy-row:last-child { border-bottom: none; }
+
+        .policy-row .pol-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
+            background: rgba(16, 185, 129, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .policy-row .pol-rule { flex: 1; }
+        .policy-row .pol-rule strong { color: var(--emerald); }
+
+        .policy-row .pol-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--emerald);
+            padding: 0.25rem 0.55rem;
+            border-radius: 5px;
+            background: rgba(16, 185, 129, 0.12);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 0.55rem;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.95rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            border-color: var(--emerald);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .control-btn.primary {
+            background: var(--mesh-gradient);
+            border: none;
+            color: #052e1a;
+            font-weight: 700;
+        }
+
+        .control-btn.primary:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Yield card */
+        .yield-card {
+            background: linear-gradient(160deg, var(--bg-elevated) 0%, rgba(234, 179, 8, 0.05) 100%);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            border-radius: 14px;
+            padding: 1.1rem;
+        }
+
+        .yield-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.8rem;
+        }
+
+        .yield-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .yield-source {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .yield-rate-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .yield-rate {
+            font-size: 2.2rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .yield-aer {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .yield-earnings {
+            background: var(--bg-deeper);
+            border-radius: 8px;
+            padding: 0.7rem 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+
+        .yield-earnings .label { color: var(--text-secondary); }
+        .yield-earnings .val {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        /* Transfer queue */
+        .transfer-list {
+            max-height: 240px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .transfer-row {
+            background: var(--bg-elevated);
+            border-radius: 10px;
+            padding: 0.65rem 0.8rem;
+            border-left: 2px solid var(--emerald);
+            animation: slideIn 0.3s ease;
+        }
+
+        .transfer-row.pending { border-left-color: var(--amber); }
+        .transfer-row.executing { border-left-color: var(--cyan); animation: shimmer 1.5s ease-in-out infinite; }
+
+        @keyframes shimmer {
+            0%, 100% { background: var(--bg-elevated); }
+            50% { background: rgba(6, 182, 212, 0.08); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-6px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .transfer-route {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.74rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .transfer-route .arrow {
+            color: var(--emerald);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .transfer-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .transfer-meta .amt {
+            color: var(--emerald);
+            font-weight: 600;
+        }
+
+        /* Audit log */
+        .audit-log {
+            max-height: 280px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .audit-row {
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            padding: 0.55rem 0.75rem;
+            border-left: 2px solid var(--emerald);
+            font-size: 0.7rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .audit-row.gold { border-left-color: var(--gold); }
+        .audit-row.amber { border-left-color: var(--amber); }
+        .audit-row.violet { border-left-color: var(--violet); }
+
+        .audit-msg { color: var(--text-primary); margin-bottom: 0.15rem; }
+        .audit-meta { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; }
+
+        /* Money particle */
+        .money-particle {
+            position: absolute;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--gold);
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
+            z-index: 5;
+            text-shadow: 0 0 12px rgba(234, 179, 8, 0.7);
+            opacity: 0;
+            animation: floatMoney 1.5s ease-in-out forwards;
+        }
+
+        @keyframes floatMoney {
+            0% { opacity: 0; transform: translateY(0); }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+
+        /* Processing overlay */
+        .processing-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 20, 13, 0.97);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .processing-overlay.active { display: flex; }
+
+        .mesh-animation {
+            width: 130px;
+            height: 130px;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .mesh-dot {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--emerald);
+            animation: meshOrbit 2s linear infinite;
+        }
+
+        .mesh-dot:nth-child(1) { top: 0; left: 56px; background: var(--emerald); }
+        .mesh-dot:nth-child(2) { top: 56px; right: 0; background: var(--gold); animation-delay: 0.25s; }
+        .mesh-dot:nth-child(3) { bottom: 0; left: 56px; background: var(--amber); animation-delay: 0.5s; }
+        .mesh-dot:nth-child(4) { top: 56px; left: 0; background: var(--violet); animation-delay: 0.75s; }
+        .mesh-dot:nth-child(5) {
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 30px; height: 30px;
+            background: var(--mesh-gradient);
+            animation: meshCenter 1.5s ease-in-out infinite;
+        }
+
+        @keyframes meshOrbit {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 20px currentColor; }
+        }
+
+        @keyframes meshCenter {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+        }
+
+        .processing-text { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .processing-stage { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; font-family: 'JetBrains Mono', monospace; }
+        .processing-progress { width: 300px; height: 5px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; }
+        .processing-bar { height: 100%; background: var(--mesh-gradient); width: 0%; transition: width 0.3s; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.85rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.7);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            max-width: 380px;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-icon { font-size: 1.3rem; }
+        .toast-title { font-size: 0.85rem; font-weight: 600; }
+        .toast-message { font-size: 0.7rem; color: var(--text-muted); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deeper); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🕸️</div>
+                <div>
+                    <div class="logo-text">BankMesh</div>
+                    <div class="logo-subtitle">Round Treasury · Open Banking Aggregator</div>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge live">● Plaid Connected</span>
+                <span class="badge">5 Accounts</span>
+                <span class="badge">PSD2 Compliant</span>
+                <span class="badge">Insignis MMF</span>
+                <span class="badge">FRN 804718</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="hero">
+            <h1>Every Bank. One Mesh. Cash Always Earning.</h1>
+            <p>BankMesh connects to Wise, Mercury, Revolut Business, and HSBC via Open Banking. It enforces your minimum balances, sweeps surplus into Insignis MMF at 4.85% AER, and exposes a full audit trail for every movement.</p>
+            <div class="hero-meta">
+                <span><strong>•</strong> Open Banking (Plaid AISP)</span>
+                <span><strong>•</strong> Policy-driven sweeps</span>
+                <span><strong>•</strong> Next-day MMF liquidity</span>
+            </div>
+        </div>
+
+        <div class="stat-strip">
+            <div class="stat-tile">
+                <div class="label">Total Cash</div>
+                <div class="value" id="totalCash">£612,400</div>
+                <div class="delta up" id="totalDelta">+£14,200 yield (90d)</div>
+            </div>
+            <div class="stat-tile gold">
+                <div class="label">In MMF (Earning)</div>
+                <div class="value" id="mmfBalance">£280,000</div>
+                <div class="delta" id="mmfPct">45.7% of total</div>
+            </div>
+            <div class="stat-tile amber">
+                <div class="label">Annual Yield Rate</div>
+                <div class="value">4.85%</div>
+                <div class="delta">AER · BlackRock ICS</div>
+            </div>
+            <div class="stat-tile violet">
+                <div class="label">Idle Cash Surplus</div>
+                <div class="value" id="surplusValue">£68,000</div>
+                <div class="delta" id="surplusDelta">ready to sweep</div>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🌐 Account Mesh</h3>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono';">Updated <span id="updatedAt">just now</span></span>
+                </div>
+                <div class="card-body">
+                    <div class="mesh-canvas" id="meshCanvas">
+                        <svg id="flowSvg" viewBox="0 0 800 460"></svg>
+                        <div class="bank-grid">
+                            <div class="bank-card" id="bank-hsbc" data-name="HSBC">
+                                <div class="surplus-flag">SURPLUS</div>
+                                <div class="bank-header">
+                                    <div class="bank-logo hsbc">H</div>
+                                    <div class="bank-name-block">
+                                        <div class="bank-name">HSBC Business</div>
+                                        <div class="bank-meta">GBP · Operating</div>
+                                    </div>
+                                </div>
+                                <div class="bank-balance" id="bal-hsbc">£148,000</div>
+                                <div class="bank-meta-row">
+                                    <span class="pos">+£68k vs min</span>
+                                    <span class="threshold">min: £80k</span>
+                                </div>
+                                <div class="bank-progress">
+                                    <div class="bank-progress-bar" id="prog-hsbc" style="width: 85%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bank-card" id="bank-wise" data-name="Wise">
+                                <div class="surplus-flag">SURPLUS</div>
+                                <div class="bank-header">
+                                    <div class="bank-logo wise">W</div>
+                                    <div class="bank-name-block">
+                                        <div class="bank-name">Wise Business</div>
+                                        <div class="bank-meta">EUR · FX Hub</div>
+                                    </div>
+                                </div>
+                                <div class="bank-balance" id="bal-wise">€72,400</div>
+                                <div class="bank-meta-row">
+                                    <span class="pos">+€32k vs min</span>
+                                    <span class="threshold">min: €40k</span>
+                                </div>
+                                <div class="bank-progress">
+                                    <div class="bank-progress-bar" id="prog-wise" style="width: 78%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bank-card" id="bank-revolut" data-name="Revolut">
+                                <div class="surplus-flag">SURPLUS</div>
+                                <div class="bank-header">
+                                    <div class="bank-logo revolut">R</div>
+                                    <div class="bank-name-block">
+                                        <div class="bank-name">Revolut Business</div>
+                                        <div class="bank-meta">GBP · Cards Pool</div>
+                                    </div>
+                                </div>
+                                <div class="bank-balance" id="bal-revolut">£62,000</div>
+                                <div class="bank-meta-row">
+                                    <span class="pos">+£22k vs min</span>
+                                    <span class="threshold">min: £40k</span>
+                                </div>
+                                <div class="bank-progress">
+                                    <div class="bank-progress-bar" id="prog-revolut" style="width: 72%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bank-card mmf" id="bank-mmf" data-name="Insignis MMF">
+                                <div class="bank-header">
+                                    <div class="bank-logo mmf">£+</div>
+                                    <div class="bank-name-block">
+                                        <div class="bank-name">Insignis MMF</div>
+                                        <div class="bank-meta">4.85% AER · T+1 liquidity</div>
+                                    </div>
+                                </div>
+                                <div class="bank-balance" id="bal-mmf">£280,000</div>
+                                <div class="bank-meta-row">
+                                    <span class="pos" id="yieldPos">earning £37/day</span>
+                                    <span class="threshold">BlackRock ICS</span>
+                                </div>
+                                <div class="bank-progress">
+                                    <div class="bank-progress-bar" id="prog-mmf" style="width: 100%; background: var(--gold);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="policy-panel">
+                        <div class="policy-row">
+                            <div class="pol-icon">📏</div>
+                            <div class="pol-rule">Keep <strong>£80k</strong> minimum at HSBC · <strong>£40k</strong> at Revolut · <strong>€40k</strong> at Wise</div>
+                            <div class="pol-status">ACTIVE</div>
+                        </div>
+                        <div class="policy-row">
+                            <div class="pol-icon">📅</div>
+                            <div class="pol-rule">Sweep surplus into Insignis MMF every <strong>Friday at 16:00</strong></div>
+                            <div class="pol-status">ACTIVE</div>
+                        </div>
+                        <div class="policy-row">
+                            <div class="pol-icon">⚖️</div>
+                            <div class="pol-rule">FX rebalance EUR → GBP when EUR > <strong>€100k</strong></div>
+                            <div class="pol-status">ACTIVE</div>
+                        </div>
+                        <div class="policy-row">
+                            <div class="pol-icon">🔔</div>
+                            <div class="pol-rule">Notify CFO on Slack when sweep > <strong>£50k</strong></div>
+                            <div class="pol-status">ACTIVE</div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="control-btn primary" id="sweepBtn" onclick="executeSweep()">
+                            ⚡ Sweep Surplus to MMF
+                        </button>
+                        <button class="control-btn" onclick="rebalanceFX()">
+                            💱 Rebalance EUR → GBP
+                        </button>
+                        <button class="control-btn" onclick="resetMesh()">
+                            🔄 Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="yield-card">
+                    <div class="yield-header">
+                        <div>
+                            <div class="yield-title">Live Yield Rate</div>
+                            <div class="yield-source">BlackRock ICS Sterling Liquidity</div>
+                        </div>
+                    </div>
+                    <div class="yield-rate-row">
+                        <span class="yield-rate">4.85%</span>
+                        <span class="yield-aer">AER · net of fees</span>
+                    </div>
+                    <div class="yield-earnings">
+                        <span class="label">Earned (last 90d)</span>
+                        <span class="val">£14,213.40</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⏱️ Transfer Queue</h3>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); font-family: 'JetBrains Mono';" id="transferCount">0 pending</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="transfer-list" id="transferList">
+                            <div style="color: var(--text-muted); font-size: 0.78rem; text-align: center; padding: 1rem;">
+                                Trigger a sweep to see transfers
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📋 Audit Trail</h3>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); font-family: 'JetBrains Mono';" id="auditCount">3 events</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="audit-log" id="auditLog">
+                            <div class="audit-row">
+                                <div class="audit-msg">Plaid AISP token refreshed</div>
+                                <div class="audit-meta">08:00:12 · all 4 banks healthy</div>
+                            </div>
+                            <div class="audit-row">
+                                <div class="audit-msg">Balance snapshot taken</div>
+                                <div class="audit-meta">08:00:14 · total £612,400</div>
+                            </div>
+                            <div class="audit-row gold">
+                                <div class="audit-msg">Yield credited: £37.18</div>
+                                <div class="audit-meta">08:00:00 · Insignis MMF</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="mesh-animation">
+            <div class="mesh-dot"></div>
+            <div class="mesh-dot"></div>
+            <div class="mesh-dot"></div>
+            <div class="mesh-dot"></div>
+            <div class="mesh-dot"></div>
+        </div>
+        <div class="processing-text">Orchestrating Cash Flow...</div>
+        <div class="processing-stage" id="processingStage">Computing optimal sweep...</div>
+        <div class="processing-progress">
+            <div class="processing-bar" id="processingBar"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <span class="toast-icon">✅</span>
+        <div>
+            <div class="toast-title" id="toastTitle">Success</div>
+            <div class="toast-message" id="toastMessage">Done</div>
+        </div>
+    </div>
+
+    <script>
+        const BANKS = {
+            hsbc: { balance: 148000, min: 80000, currency: '£', display: '£', fxToGbp: 1 },
+            wise: { balance: 72400, min: 40000, currency: '€', display: '€', fxToGbp: 0.86 },
+            revolut: { balance: 62000, min: 40000, currency: '£', display: '£', fxToGbp: 1 },
+            mmf: { balance: 280000, min: 0, currency: '£', display: '£', fxToGbp: 1 }
+        };
+
+        let auditEntries = 3;
+        let transferIdx = 0;
+
+        function fmt(amount, currency = '£') {
+            return currency + Math.round(amount).toLocaleString();
+        }
+
+        function calcSurplus(key) {
+            return Math.max(0, BANKS[key].balance - BANKS[key].min);
+        }
+
+        function updateUI() {
+            ['hsbc', 'wise', 'revolut', 'mmf'].forEach(k => {
+                const b = BANKS[k];
+                document.getElementById(`bal-${k}`).textContent = fmt(b.balance, b.display);
+                if (k !== 'mmf') {
+                    const surplus = calcSurplus(k);
+                    const max = b.min * 2.5;
+                    const pct = Math.min(100, (b.balance / max) * 100);
+                    document.getElementById(`prog-${k}`).style.width = pct + '%';
+                    const card = document.getElementById(`bank-${k}`);
+                    card.classList.toggle('surplus', surplus > 5000);
+                    card.classList.toggle('below-min', b.balance < b.min);
+                }
+            });
+
+            const totalGbp = Object.entries(BANKS).reduce((s, [k, b]) => s + b.balance * b.fxToGbp, 0);
+            document.getElementById('totalCash').textContent = fmt(totalGbp);
+            document.getElementById('mmfBalance').textContent = fmt(BANKS.mmf.balance);
+            const pct = (BANKS.mmf.balance / totalGbp * 100).toFixed(1);
+            document.getElementById('mmfPct').textContent = `${pct}% of total`;
+
+            const totalSurplusGbp =
+                calcSurplus('hsbc') +
+                calcSurplus('revolut') +
+                calcSurplus('wise') * BANKS.wise.fxToGbp;
+            document.getElementById('surplusValue').textContent = fmt(totalSurplusGbp);
+            document.getElementById('surplusDelta').textContent = totalSurplusGbp > 5000 ? 'ready to sweep' : 'all balanced ✓';
+
+            // Update mesh edges
+            drawMeshEdges();
+        }
+
+        function drawMeshEdges() {
+            const svg = document.getElementById('flowSvg');
+            svg.innerHTML = '';
+            // No persistent edges by default; drawn on transfer
+        }
+
+        function showProcessing(stages, onDone) {
+            const overlay = document.getElementById('processingOverlay');
+            const bar = document.getElementById('processingBar');
+            const stage = document.getElementById('processingStage');
+            overlay.classList.add('active');
+            bar.style.width = '0%';
+            let progress = 0;
+            let sIdx = 0;
+            const tick = setInterval(() => {
+                progress += Math.random() * 18 + 7;
+                if (progress > 100) progress = 100;
+                bar.style.width = progress + '%';
+                const ns = Math.floor((progress / 100) * stages.length);
+                if (ns !== sIdx && ns < stages.length) { sIdx = ns; stage.textContent = stages[ns]; }
+                if (progress >= 100) {
+                    clearInterval(tick);
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        onDone();
+                    }, 300);
+                }
+            }, 90);
+        }
+
+        function executeSweep() {
+            const hsbcSurplus = calcSurplus('hsbc');
+            const revSurplus = calcSurplus('revolut');
+            const wiseSurplusEur = calcSurplus('wise');
+            const totalGbp = hsbcSurplus + revSurplus + wiseSurplusEur * BANKS.wise.fxToGbp;
+
+            if (totalGbp < 5000) {
+                showToast('💤 No Sweep Needed', 'All accounts within policy', 'success');
+                return;
+            }
+
+            showProcessing([
+                'Computing optimal sweep amounts...',
+                'Checking T+1 MMF liquidity...',
+                'Validating policy compliance...',
+                'Routing through Plaid AISP...',
+                'Initiating transfers...'
+            ], () => runSweep(hsbcSurplus, revSurplus, wiseSurplusEur));
+        }
+
+        async function runSweep(hsbcS, revS, wiseSEur) {
+            document.getElementById('sweepBtn').disabled = true;
+
+            const transfers = [];
+            if (hsbcS >= 5000) transfers.push({ from: 'hsbc', to: 'mmf', amount: hsbcS, gbp: hsbcS, curr: '£' });
+            if (revS >= 5000) transfers.push({ from: 'revolut', to: 'mmf', amount: revS, gbp: revS, curr: '£' });
+            if (wiseSEur >= 5000) transfers.push({ from: 'wise', to: 'mmf', amount: wiseSEur, gbp: wiseSEur * BANKS.wise.fxToGbp, curr: '€' });
+
+            for (const t of transfers) {
+                queueTransfer(t);
+                await sleep(400);
+            }
+
+            // Execute each
+            for (let i = 0; i < transfers.length; i++) {
+                await executeTransferAnim(transfers[i], i);
+            }
+
+            updateUI();
+            showToast('🎉 Sweep Complete', `£${Math.round(transfers.reduce((s, t) => s + t.gbp, 0)).toLocaleString()} earning 4.85% AER`, 'success');
+            addAudit(`Sweep completed → MMF`, `total=£${Math.round(transfers.reduce((s, t) => s + t.gbp, 0)).toLocaleString()}`, 'gold');
+            addAudit(`CFO notified on Slack`, `channel=#treasury`, 'violet');
+            document.getElementById('sweepBtn').disabled = false;
+        }
+
+        function queueTransfer(t) {
+            const list = document.getElementById('transferList');
+            if (list.querySelector('div[style*="text-align: center"]')) list.innerHTML = '';
+            const banksNames = { hsbc: 'HSBC', wise: 'Wise', revolut: 'Revolut', mmf: 'Insignis MMF' };
+            const row = document.createElement('div');
+            row.className = 'transfer-row pending';
+            row.id = `transfer-${transferIdx++}`;
+            row.innerHTML = `
+                <div class="transfer-route">
+                    <span>${banksNames[t.from]}</span>
+                    <span class="arrow">→</span>
+                    <span>${banksNames[t.to]}</span>
+                </div>
+                <div class="transfer-meta">
+                    <span>queued · T+1 settlement</span>
+                    <span class="amt">${t.curr}${Math.round(t.amount).toLocaleString()}</span>
+                </div>
+            `;
+            list.insertBefore(row, list.firstChild);
+            document.getElementById('transferCount').textContent = `${list.children.length} pending`;
+            addAudit(`Transfer queued`, `${banksNames[t.from]} → ${banksNames[t.to]} ${t.curr}${Math.round(t.amount).toLocaleString()}`, '');
+        }
+
+        async function executeTransferAnim(t, idx) {
+            const fromCard = document.getElementById(`bank-${t.from}`);
+            const toCard = document.getElementById(`bank-${t.to}`);
+
+            fromCard.classList.add('sweeping');
+            toCard.classList.add('active');
+
+            // Animate flow line on SVG
+            const svg = document.getElementById('flowSvg');
+            const canvasRect = document.getElementById('meshCanvas').getBoundingClientRect();
+            const fromRect = fromCard.getBoundingClientRect();
+            const toRect = toCard.getBoundingClientRect();
+
+            const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left;
+            const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top;
+            const x2 = toRect.left + toRect.width / 2 - canvasRect.left;
+            const y2 = toRect.top + toRect.height / 2 - canvasRect.top;
+
+            const scaleX = 800 / canvasRect.width;
+            const scaleY = 460 / canvasRect.height;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const cx = (x1 + x2) / 2;
+            const cy = (y1 + y2) / 2 - 50;
+            path.setAttribute('d', `M ${x1 * scaleX} ${y1 * scaleY} Q ${cx * scaleX} ${cy * scaleY} ${x2 * scaleX} ${y2 * scaleY}`);
+            path.setAttribute('stroke', '#eab308');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-dasharray', '8 5');
+            path.style.filter = 'drop-shadow(0 0 6px #eab308)';
+            const pathLen = 600;
+            path.setAttribute('stroke-dashoffset', pathLen);
+            path.style.transition = 'stroke-dashoffset 1.2s ease-in-out';
+            svg.appendChild(path);
+
+            requestAnimationFrame(() => path.setAttribute('stroke-dashoffset', '0'));
+
+            // Floating money particle
+            const particle = document.createElement('div');
+            particle.className = 'money-particle';
+            particle.textContent = `+${t.curr}${Math.round(t.amount).toLocaleString()}`;
+            particle.style.left = (x2 - 30) + 'px';
+            particle.style.top = (y2 - 10) + 'px';
+            document.getElementById('meshCanvas').appendChild(particle);
+            setTimeout(() => particle.remove(), 1500);
+
+            // Update transfer row to executing
+            const transferRow = document.querySelectorAll('.transfer-row')[0];
+            if (transferRow) transferRow.classList.replace('pending', 'executing');
+
+            await sleep(1200);
+
+            // Apply balance changes (gradually)
+            const startFrom = BANKS[t.from].balance;
+            const startTo = BANKS[t.to].balance;
+            const targetFrom = startFrom - t.amount;
+            const targetTo = startTo + t.gbp;
+
+            const steps = 18;
+            for (let s = 1; s <= steps; s++) {
+                BANKS[t.from].balance = startFrom + (targetFrom - startFrom) * (s / steps);
+                BANKS[t.to].balance = startTo + (targetTo - startTo) * (s / steps);
+                document.getElementById(`bal-${t.from}`).textContent = fmt(BANKS[t.from].balance, BANKS[t.from].display);
+                document.getElementById(`bal-${t.from}`).classList.add('changing');
+                document.getElementById(`bal-${t.to}`).textContent = fmt(BANKS[t.to].balance, BANKS[t.to].display);
+                await sleep(35);
+            }
+            document.getElementById(`bal-${t.from}`).classList.remove('changing');
+
+            fromCard.classList.remove('sweeping');
+
+            // Settle: remove path, mark done
+            setTimeout(() => path.remove(), 600);
+            await sleep(300);
+            toCard.classList.remove('active');
+
+            // Mark transfer settled
+            if (transferRow) {
+                transferRow.classList.remove('executing');
+                transferRow.querySelector('.transfer-meta span').textContent = `settled · ${new Date().toTimeString().substring(0, 8)}`;
+            }
+        }
+
+        async function rebalanceFX() {
+            if (BANKS.wise.balance < 100000) {
+                showToast('💱 No FX Action', 'EUR balance below threshold (€100k)', 'success');
+                addAudit(`FX rebalance skipped`, `eur=€${BANKS.wise.balance.toLocaleString()} threshold=€100k`, '');
+                return;
+            }
+
+            showProcessing([
+                'Quoting EUR/GBP rate via Wise...',
+                'Locking rate: 1 EUR = £0.86...',
+                'Executing FX swap...',
+                'Settling to HSBC...'
+            ], async () => {
+                const eurAmount = BANKS.wise.balance - 80000;
+                const gbpAmount = eurAmount * BANKS.wise.fxToGbp;
+                const t = { from: 'wise', to: 'hsbc', amount: eurAmount, gbp: gbpAmount, curr: '€' };
+                queueTransfer(t);
+                await sleep(500);
+                await executeTransferAnim(t, 0);
+                BANKS.hsbc.balance = BANKS.hsbc.balance; // already updated by anim
+                updateUI();
+                showToast('💱 FX Swap Done', `€${Math.round(eurAmount).toLocaleString()} → £${Math.round(gbpAmount).toLocaleString()}`, 'success');
+                addAudit(`FX swap executed`, `wise→hsbc rate=0.86`, 'violet');
+            });
+        }
+
+        function resetMesh() {
+            BANKS.hsbc.balance = 148000;
+            BANKS.wise.balance = 72400;
+            BANKS.revolut.balance = 62000;
+            BANKS.mmf.balance = 280000;
+            document.getElementById('transferList').innerHTML = `<div style="color: var(--text-muted); font-size: 0.78rem; text-align: center; padding: 1rem;">Trigger a sweep to see transfers</div>`;
+            document.getElementById('transferCount').textContent = '0 pending';
+            document.getElementById('flowSvg').innerHTML = '';
+            document.querySelectorAll('.bank-card').forEach(c => c.classList.remove('active', 'sweeping'));
+            updateUI();
+            showToast('🔄 Reset', 'Mesh restored to initial state', 'success');
+        }
+
+        function addAudit(msg, meta, color = '') {
+            const log = document.getElementById('auditLog');
+            const row = document.createElement('div');
+            row.className = `audit-row ${color}`;
+            const ts = new Date().toTimeString().substring(0, 8);
+            row.innerHTML = `
+                <div class="audit-msg">${msg}</div>
+                <div class="audit-meta">${ts} · ${meta}</div>
+            `;
+            log.insertBefore(row, log.firstChild);
+            while (log.children.length > 25) log.removeChild(log.lastChild);
+            auditEntries++;
+            document.getElementById('auditCount').textContent = `${log.children.length} events`;
+        }
+
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = type === 'warning' ? '⚠️' : type === 'error' ? '❌' : '✅';
+            toast.querySelector('.toast-icon').textContent = icon;
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3200);
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        // Live yield ticking
+        let yieldEarned = 14213.40;
+        setInterval(() => {
+            // £280k * 4.85% / 365 / 24 / 60 / 60 ≈ £0.43 per second
+            yieldEarned += BANKS.mmf.balance * 0.0485 / 365 / 24 / 60 / 60;
+            BANKS.mmf.balance += BANKS.mmf.balance * 0.0485 / 365 / 24 / 60 / 60;
+            document.getElementById('bal-mmf').textContent = fmt(BANKS.mmf.balance);
+        }, 1000);
+
+        setInterval(() => {
+            document.getElementById('updatedAt').textContent = 'just now';
+        }, 8000);
+
+        updateUI();
+    </script>
+</body>
+</html>

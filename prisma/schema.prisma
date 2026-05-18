@@ -1,0 +1,230 @@
+// BankMesh data model.
+//
+// Design points worth flagging at review time:
+//
+// 1. Plaid access tokens are encrypted at rest. The plaintext token
+//    never lives in any column — only `accessTokenCiphertext` and a
+//    KMS-managed key id. Compromise of a DB backup ≠ compromise of
+//    the customer's open-banking consent.
+//
+// 2. Balance snapshots are append-only (`BalanceSnapshot`), not
+//    overwrites on Account. We need historical balance for yield
+//    accounting and surplus computation over time, and append-only
+//    plays well with audit.
+//
+// 3. Policies are versioned, not edited in place. A sweep records the
+//    EXACT policy version it ran under. When the CFO asks "why did we
+//    move £150k last Friday", we point at the immutable policy doc.
+//
+// 4. Sweep has a typed state machine — same approach as PayrollPilot's
+//    Exception — so SCA-required sweeps can pause for an approval signal
+//    while smaller-amount sweeps run autonomously.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Open Banking connection ----------------------------------------------
+
+model PlaidItem {
+  id                   String    @id @default(cuid())
+  // External identifier from Plaid's `item.id` field. One bank
+  // connection = one Item, which may expose multiple Accounts.
+  plaidItemId          String    @unique
+
+  institutionId        String
+  institutionName      String
+
+  // PSD2 access tokens for AIS (account info) live ~90 days then need
+  // re-consent. We keep them encrypted and renew them via webhook.
+  accessTokenCiphertext String    @db.Text
+  accessTokenKeyId     String                 // KMS key id used to wrap
+  consentExpiresAt     DateTime
+  status               PlaidItemStatus @default(HEALTHY)
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  lastRefreshAt        DateTime?
+
+  accounts             Account[]
+
+  @@index([status, consentExpiresAt])
+}
+
+model Account {
+  id              String    @id @default(cuid())
+  plaidItemId     String
+  plaidItem       PlaidItem @relation(fields: [plaidItemId], references: [id])
+
+  plaidAccountId  String    @unique
+  bankName        String
+  accountName     String
+  accountType     AccountType
+  currency        String
+
+  // Latest aggregated values. Source of truth is BalanceSnapshot —
+  // these are denormalised for the most-common read path.
+  currentBalance  Decimal   @db.Decimal(14, 2) @default(0)
+  availableBalance Decimal? @db.Decimal(14, 2)
+  asOf            DateTime  @default(now())
+
+  // Per-account minimum balance (policies reference this).
+  minimumBalance  Decimal   @db.Decimal(14, 2) @default(0)
+  // Whether this account participates in autonomous sweeps.
+  sweepEligible   Boolean   @default(false)
+
+  snapshots       BalanceSnapshot[]
+  sweepsFrom      Sweep[]   @relation("SweepFrom")
+  sweepsTo        Sweep[]   @relation("SweepTo")
+
+  @@index([currency, accountType])
+}
+
+model BalanceSnapshot {
+  id          String    @id @default(cuid())
+  accountId   String
+  account     Account   @relation(fields: [accountId], references: [id])
+
+  current     Decimal   @db.Decimal(14, 2)
+  available   Decimal?  @db.Decimal(14, 2)
+  currency    String
+  takenAt     DateTime  @default(now())
+  source      SnapshotSource @default(PLAID_AISP)
+
+  @@index([accountId, takenAt])
+}
+
+// --- Policies (versioned) -------------------------------------------------
+
+model Policy {
+  id          String    @id @default(cuid())
+  name        String
+  // Versioning: edits create a new row with `parentPolicyId` pointing
+  // back. The "active" version is the one with `isActive=true`; only
+  // one per name. Old versions stay queryable so audits resolve.
+  parentPolicyId String?
+  version     Int       @default(1)
+  isActive    Boolean   @default(true)
+
+  // The actual rules. Validated as a Zod discriminated union on the
+  // way in — see src/policy/types.ts.
+  rules       Json
+  description String?
+
+  createdAt   DateTime  @default(now())
+  createdBy   String
+
+  sweeps      Sweep[]
+
+  @@unique([name, version])
+  @@index([isActive])
+}
+
+// --- Sweeps & approvals ---------------------------------------------------
+
+model Sweep {
+  id              String    @id @default(cuid())
+  policyId        String?
+  policy          Policy?   @relation(fields: [policyId], references: [id])
+  policyVersion   Int?      // pinned at sweep time
+
+  fromAccountId   String
+  fromAccount     Account   @relation("SweepFrom", fields: [fromAccountId], references: [id])
+  toAccountId     String
+  toAccount       Account   @relation("SweepTo",   fields: [toAccountId],   references: [id])
+
+  amount          Decimal   @db.Decimal(14, 2)
+  currency        String
+  reason          String
+
+  state           SweepState @default(PROPOSED)
+
+  // SCA challenge tracking. PSD2 requires Strong Customer Authentication
+  // on payment initiation; we hold the challenge id and wait for
+  // confirmation via webhook.
+  scaRequired     Boolean   @default(false)
+  scaChallengeId  String?
+  scaCompletedAt  DateTime?
+
+  plaidTransferId String?
+  executedAt      DateTime?
+  failureReason   String?
+
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+
+  createdAt       DateTime  @default(now())
+  events          SweepEvent[]
+
+  @@index([state, createdAt])
+}
+
+model SweepEvent {
+  id        String   @id @default(cuid())
+  sweepId   String
+  sweep     Sweep    @relation(fields: [sweepId], references: [id])
+
+  eventType String
+  payload   Json
+  timestamp DateTime @default(now())
+
+  @@index([sweepId, timestamp])
+}
+
+// --- Yield accrual --------------------------------------------------------
+
+// MMF / interest-bearing positions get their own yield ledger so we
+// can produce an audit-friendly "we earned £X this quarter" view
+// without grovelling through balance deltas.
+model YieldAccrual {
+  id          String    @id @default(cuid())
+  accountId   String
+  asOf        DateTime
+  principal   Decimal   @db.Decimal(14, 2)
+  annualRate  Decimal   @db.Decimal(6, 5)   // e.g. 0.04850
+  accruedToday Decimal  @db.Decimal(14, 4)
+  currency    String
+
+  @@unique([accountId, asOf])
+  @@index([accountId, asOf])
+}
+
+// --- Enums ----------------------------------------------------------------
+
+enum PlaidItemStatus {
+  HEALTHY
+  CONSENT_EXPIRING       // < 7 days from renewal
+  CONSENT_EXPIRED
+  LOGIN_REQUIRED
+  REVOKED
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  MMF
+  FX_HOLDING
+}
+
+enum SnapshotSource {
+  PLAID_AISP
+  PLAID_WEBHOOK
+  MANUAL
+  RECONCILIATION
+}
+
+enum SweepState {
+  PROPOSED
+  PENDING_APPROVAL
+  SCA_REQUIRED
+  EXECUTING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
