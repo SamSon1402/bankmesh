@@ -193,14 +193,7 @@ curl -X POST http://localhost:3000/api/webhooks/plaid \
 
 ---
 
-## What's not in this Project
 
-- **Auth + multi-tenancy.** Routes take `userId` from the body; production wraps with `withAuth(orgId)` and rows get an `organizationId` column.
-- **Real Plaid calls.** `accountsBalanceGet`, `transferCreate`, etc. are stubbed; shapes match the SDK. Drop in real credentials and remove the stubs.
-- **KMS-managed encryption keys.** Env-based `ACCESS_TOKEN_AES_KEY` for dev; production reads from AWS KMS / Vault via the `keyId` indirection already in the schema.
-- **Yield accrual job.** Schema has `YieldAccrual` table; the daily activity that fills it isn't implemented.
-- **Tests.** Pure `evaluatePolicy` is the highest-leverage test target; Temporal `TestWorkflowEnvironment` for the sweep state machine; webhook signature verification.
-- **Observability.** OpenTelemetry across Inngest → Temporal → activity; Datadog metrics on sweep-state-duration percentiles.
 
 ---
 
